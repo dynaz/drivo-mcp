@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+principals.json
+!principals.example.json
+coverage/

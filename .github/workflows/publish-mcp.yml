@@ -1,0 +1,52 @@
+name: publish-mcp
+# tag vX.Y.Z -> test -> build -> npm publish -> MCP Registry login (DNS, biz.drivo) -> validate -> publish
+on:
+  push:
+    tags: ["v*.*.*"]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Protected environment: holds NPM_TOKEN and MCP_REGISTRY_DNS_PRIVATE_KEY; restrict to release tags + required reviewers.
+    environment: mcp-registry-publish
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Tag must match package.json and server.json versions
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          [ "$(jq -r .version package.json)" = "$V" ] || { echo "package.json version != tag"; exit 1; }
+          [ "$(jq -r .version server.json)" = "$V" ] || { echo "server.json version != tag"; exit 1; }
+          [ "$(jq -r '.packages[0].version' server.json)" = "$V" ] || { echo "server.json package version != tag"; exit 1; }
+          [ "$(jq -r .mcpName package.json)" = "$(jq -r .name server.json)" ] || { echo "mcpName != server name"; exit 1; }
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - name: Publish npm package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # biz.drivo/* is a domain namespace: ownership of drivo.biz is proven with a DNS TXT record
+      # (generate the keypair with `mcp-publisher login dns` instructions; see README "Registry publishing").
+      - name: Authenticate to MCP Registry (DNS)
+        run: ./mcp-publisher login dns --domain drivo.biz --private-key "${{ secrets.MCP_REGISTRY_DNS_PRIVATE_KEY }}"
+
+      - name: Validate server.json
+        run: ./mcp-publisher validate
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish

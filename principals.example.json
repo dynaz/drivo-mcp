@@ -1,0 +1,12 @@
+[
+  {
+    "id": "example-principal",
+    "description": "Sales manager, Drivo Demo Co.",
+    "keyHash": "sha256:<output of: npm run hash-key>",
+    "userId": 42,
+    "scopes": ["drivo.vehicle.read", "drivo.customer.read", "drivo.crm.read", "drivo.crm.write", "drivo.sale.read"],
+    "companyIds": [1],
+    "defaultCompanyId": 1,
+    "upstreamTokenEnv": "DRIVO_UPSTREAM_TOKEN_EXAMPLE_PRINCIPAL"
+  }
+]

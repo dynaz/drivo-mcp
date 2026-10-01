@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "biz.drivo/drivo-erp",
+  "title": "Drivo ERP",
+  "description": "Secure MCP server for the Drivo dealer platform: vehicles, customers, CRM, deals, service.",
+  "websiteUrl": "https://drivo.biz",
+  "repository": {
+    "url": "https://github.com/dynaz/drivo-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@dynaz/drivo-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "MCP_TRANSPORT", "description": "Must be 'stdio' for local use.", "isRequired": true, "default": "stdio" },
+        { "name": "DRIVO_API_BASE_URL", "description": "Base URL of your Drivo API, e.g. https://demo.drivo.biz", "isRequired": true },
+        { "name": "DRIVO_MCP_PRINCIPALS_FILE", "description": "Path to the principals JSON (hashed API keys, scopes, company allowlist).", "isRequired": true },
+        { "name": "DRIVO_MCP_API_KEY", "description": "Your Drivo MCP API key (a principal in the principals file).", "isRequired": true, "isSecret": true },
+        { "name": "DRIVO_MCP_CONFIRM_SECRET", "description": "Random secret (>=16 chars) that signs high-risk confirmation tokens.", "isRequired": true, "isSecret": true }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.drivo.biz/mcp",
+      "headers": [
+        { "name": "Authorization", "description": "Bearer <your Drivo MCP API key>", "isRequired": true, "isSecret": true }
+      ]
+    }
+  ]
+}
